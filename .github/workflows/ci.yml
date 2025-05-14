@@ -1,45 +1,35 @@
-# .github/workflows/ci.yml
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
+name: Conda
+on: [push]
 
 jobs:
-  test-and-track-emissions:
+  # label of the job
+  tests:
+    name: Tests
+    # containers must run in Linux based operating systems
     runs-on: ubuntu-latest
-
+    # Do not ignore bash profile files. From:
+    # https://github.com/marketplace/actions/setup-miniconda
+    defaults:
+      run:
+        shell: bash -l {0}
+    # Docker Hub image that `postgres-job` executes in
+    container: node:latest
+    # service containers to run with `postgres-job`
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Conda environment
-        uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v2
         with:
+          miniconda-version: "latest"
+          channels: bioconda, conda-forge, defaults
+          use-only-tar-bz2: true  # IMPORTANT: This needs to be set for caching to work properly!
           auto-update-conda: true
-          python-version: 3.10
-          environment-file: environment.yml
-          activate-environment: true
-
-      - name: Install CodeCarbon
+          auto-activate-base: true
+      - name: Install samtools
         run: |
-          pip install codecarbon
+            echo "begin: PATH=$PATH;"
 
-      - name: Create wrapper to track emissions
-        run: |
-          echo "from codecarbon import EmissionsTracker" > runner.py
-          echo "tracker = EmissionsTracker()" >> runner.py
-          echo "tracker.start()" >> runner.py
-          echo "exec(open('main.py').read())" >> runner.py
-          echo "tracker.stop()" >> runner.py
+            conda create -y --name samtools samtools
 
-      - name: Run main.py with CodeCarbon tracking
-        run: |
-          python runner.py
-
-      - name: Upload emissions report
-        uses: actions/upload-artifact@v4
-        with:
-          name: codecarbon-emissions
-          path: emissions.csv
+            conda activate samtools || true
+            echo "after conda activate samtools: PATH=$PATH;"
+            which samtools || true
+            # Use samtools here.
