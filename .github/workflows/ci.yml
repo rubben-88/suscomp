@@ -1,55 +1,45 @@
-name: CI with Conda & CodeCarbon Shim
+# .github/workflows/ci.yml
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 jobs:
-  build:
-    runs-on: ubuntu-24.04
+  test-and-track-emissions:
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup Miniforge
+      - name: Set up Conda environment
         uses: conda-incubator/setup-miniconda@v2
         with:
-          auto-activate-base: false
-          mamba-version: ""       # disable mamba
-          miniforge-version: "latest"
-
-      - name: Create Conda environment
-        run: |
-          conda env create -f environment.yml -n lunar-env
+          auto-update-conda: true
+          python-version: 3.10
+          environment-file: environment.yml
+          activate-environment: true
 
       - name: Install CodeCarbon
         run: |
-          conda run -n lunar-env pip install --upgrade codecarbon
+          pip install codecarbon
 
-      - name: Check Python version
+      - name: Create wrapper to track emissions
         run: |
-          conda run -n lunar-env python --version
+          echo "from codecarbon import EmissionsTracker" > runner.py
+          echo "tracker = EmissionsTracker()" >> runner.py
+          echo "tracker.start()" >> runner.py
+          echo "exec(open('main.py').read())" >> runner.py
+          echo "tracker.stop()" >> runner.py
 
-      - name: Track emissions for main.py
+      - name: Run main.py with CodeCarbon tracking
         run: |
-          conda run -n lunar-env python - << 'PYCODE'
-          from codecarbon import EmissionsTracker
-          import runpy
+          python runner.py
 
-          tracker = EmissionsTracker(
-              project_name="LunarLanderCLI",
-              json_output_file="emissions.json"
-          )
-          tracker.start()
-
-          runpy.run_path("main.py", run_name="__main__")
-
-          tracker.stop()
-          PYCODE
-
-      - name: Upload emissions.json
+      - name: Upload emissions report
         uses: actions/upload-artifact@v4
         with:
-          name: emissions
-          path: emissions.json
+          name: codecarbon-emissions
+          path: emissions.csv
