@@ -41,7 +41,7 @@ jobs:
         python run_with_emissions.py
 
     - name: Upload emissions output
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: codecarbon-emissions
         path: emissions.csv
