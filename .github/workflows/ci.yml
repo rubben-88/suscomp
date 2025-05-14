@@ -62,12 +62,10 @@ jobs:
         df = pd.read_csv("emissions.csv")
         summary = df.iloc[-1].to_dict()
         # Build markdown body
-        body = (
-            f"**Carbon Emissions Report**\n
+        body = f"""**Carbon Emissions Report**\n
             - CO₂ emitted: {summary['emissions']:.4f} kg\n
             - Energy consumed: {summary['energy_consumed']:.4f} kWh\n
-            - Country: {summary['country_iso_code']}"
-        )
+            - Country: {summary['country_iso_code']}"""
         # Output for use in next action
         print(f"::set-output name=body::{body}")
         EOF
