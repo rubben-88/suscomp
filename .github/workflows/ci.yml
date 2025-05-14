@@ -60,10 +60,12 @@ jobs:
     import pandas as pd
     df = pd.read_csv("emissions.csv")
     summary = df.iloc[-1].to_dict()
-    body = f"""**Carbon Emissions Report**
-    - CO₂ emitted: {summary['emissions']:.4f} kg  
-    - Energy consumed: {summary['energy_consumed']:.4f} kWh  
-    - Country: {summary['country_iso_code']}"""
+    body = (
+      f"**Carbon Emissions Report**"
+      f"- CO₂ emitted: {summary['emissions']:.4f} kg"  
+      f"- Energy consumed: {summary['energy_consumed']:.4f} kWh"  
+      f"- Country: {summary['country_iso_code']}"
+    )
     with open("comment.txt", "w") as f:
         f.write(body)
     EOF
