@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NUM_EPISODES: 100
+      NUM_EPISODES: 1000
 
     steps:
     - name: Checkout code
