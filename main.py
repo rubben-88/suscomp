@@ -7,7 +7,7 @@ env = gym.make("LunarLander-v3", render_mode=None)
 NUM_EPISODES = 1000
 total_rewards = []
 
-for episode in range(NUM_EPISODES):
+for episode in range(NUM_EPISODES): 
     obs, _ = env.reset()
     done = False
     total_reward = 0
