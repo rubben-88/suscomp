@@ -1,0 +1,50 @@
+name: CI with Conda & CodeCarbon CLI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      # 1️⃣ Checkout your code
+      - uses: actions/checkout@v4
+
+      # 2️⃣ Set up Miniforge (Conda)
+      - name: Setup Miniforge
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-activate-base: false
+          miniforge-version: "latest"
+
+      # 3️⃣ Create & activate your environment.yml  
+      - name: Create Conda environment
+        run: |
+          conda env create -f environment.yml -n lunar-env
+          echo "conda activate lunar-env" >> $GITHUB_ENV
+
+      # 4️⃣ Ensure CodeCarbon is installed
+      - name: Install CodeCarbon CLI
+        run: conda run -n lunar-env pip install --quiet codecarbon
+
+      # 5️⃣ Verify Python version
+      - name: Check Python
+        run: conda run -n lunar-env python --version
+
+      # 6️⃣ Run your script through CodeCarbon
+      - name: Run main.py with CodeCarbon CLI
+        run: |
+          conda run -n lunar-env codecarbon run \
+            --project-name LunarLanderCLI \
+            --json-output emissions.json \
+            python main.py
+
+      # 7️⃣ Upload the emissions.json artifact
+      - name: Upload emissions.json
+        uses: actions/upload-artifact@v3
+        with:
+          name: emissions
+          path: emissions.json
