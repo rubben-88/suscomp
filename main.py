@@ -9,7 +9,7 @@ total_rewards = []
 
 for episode in range(NUM_EPISODES):
     obs, _ = env.reset()
-    done = False
+    done = False 
     total_reward = 0
 
     while not done:
