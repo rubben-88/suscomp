@@ -60,11 +60,10 @@ jobs:
         s = df.iloc[-1]
         with open("emissions.md", "w") as f:
             f.write(f"""**Carbon Emissions Report**
-
-        - CO₂ emitted: {s.emissions:.4f} kg
-        - Energy consumed: {s.energy_consumed:.4f} kWh
-        - Country: {s.country_iso_code}
-        """)
+              - CO₂ emitted: {s.emissions:.4f} kg
+              - Energy consumed: {s.energy_consumed:.4f} kWh
+              - Country: {s.country_iso_code}
+            """)
         EOF
 
     - name: Comment emissions on PR
