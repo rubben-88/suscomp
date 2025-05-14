@@ -71,9 +71,11 @@ jobs:
         with open("comment.txt", "w") as f:
             f.write(body)
         EOF
-        echo "body<<EOF" >> $GITHUB_OUTPUT
-        cat comment.txt >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        {
+          echo "body<<EOF"
+          cat comment.txt
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
 
     - name: Comment emissions on PR
       if: github.event_name == 'pull_request'
