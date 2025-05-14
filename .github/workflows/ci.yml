@@ -13,34 +13,38 @@ jobs:
       # 1️⃣ Checkout your code
       - uses: actions/checkout@v4
 
-      # 2️⃣ Install Miniforge & create+activate your env from environment.yml
-      - name: Setup Conda environment
+      # 2️⃣ Install Miniforge (Conda) without auto-activation
+      - name: Setup Miniforge
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-activate-base: false
+          mamba-version: ""       # disable mamba entirely
           miniforge-version: "latest"
-          # Tell it to build & activate your env in one go:
-          environment-file: environment.yml
-          environment-name: lunar-env
-          activate-environment: lunar-env
 
-      # 3️⃣ Verify Python version in the activated env
-      - name: Check Python
-        run: python --version
-
-      # 4️⃣ Install CodeCarbon CLI in that same env
-      - name: Install CodeCarbon
-        run: pip install --upgrade codecarbon
-
-      # 5️⃣ Run your script through CodeCarbon CLI
-      - name: Run main.py with CodeCarbon
+      # 3️⃣ Create your conda env explicitly (named 'lunar-env')
+      - name: Create Conda environment
         run: |
-          codecarbon run \
+          conda env create -f environment.yml -n lunar-env
+
+      # 4️⃣ Install CodeCarbon CLI into that environment
+      - name: Install CodeCarbon
+        run: |
+          conda run -n lunar-env pip install --upgrade codecarbon
+
+      # 5️⃣ (Optional) Check that Python is correct
+      - name: Check Python version
+        run: |
+          conda run -n lunar-env python --version
+
+      # 6️⃣ Run your script under CodeCarbon via the CLI
+      - name: Track emissions for main.py
+        run: |
+          conda run -n lunar-env codecarbon run \
             --project-name LunarLanderCLI \
             --json-output emissions.json \
             python main.py
 
-      # 6️⃣ Upload the emissions.json artifact
+      # 7️⃣ Upload the emissions.json artifact
       - name: Upload emissions.json
         uses: actions/upload-artifact@v4
         with:
