@@ -23,8 +23,6 @@ jobs:
           environment-file: environment.yml
           environment-name: lunar-env
           activate-environment: lunar-env
-          # Disable Mamba to avoid the experimental warning:
-          mamba: false
 
       # 3️⃣ Verify Python version in the activated env
       - name: Check Python
