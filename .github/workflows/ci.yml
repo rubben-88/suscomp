@@ -53,20 +53,20 @@ jobs:
       run: |
         pip install pandas
         python - << 'EOF'
-import pandas as pd, json, sys
-# Read the last row of the CSV
- df = pd.read_csv("emissions.csv")
- summary = df.iloc[-1].to_dict()
- # Build markdown body
- body = (
-     f"**Carbon Emissions Report**  \n"
-     f"- CO₂ emitted: {summary['emissions_in_kg']:.4f} kg  \n"
-     f"- Energy consumed: {summary['energy_consumed']:.4f} kWh  \n"
-     f"- Timestamp: {summary['timestamp']}"
- )
- # Output for use in next action
- print(f"::set-output name=body::{body}")
-EOF
+        import pandas as pd, json, sys
+        # Read the last row of the CSV
+        df = pd.read_csv("emissions.csv")
+        summary = df.iloc[-1].to_dict()
+        # Build markdown body
+        body = (
+            f"**Carbon Emissions Report**  \n"
+            f"- CO₂ emitted: {summary['emissions_in_kg']:.4f} kg  \n"
+            f"- Energy consumed: {summary['energy_consumed']:.4f} kWh  \n"
+            f"- Timestamp: {summary['timestamp']}"
+        )
+        # Output for use in next action
+        print(f"::set-output name=body::{body}")
+        EOF
 
     - name: Comment emissions on PR
       if: github.event_name == 'pull_request'
