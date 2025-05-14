@@ -2,7 +2,7 @@ name: Run CodeCarbon Emissions Tracker
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ] 
   pull_request:
     branches: [ main ]
 
