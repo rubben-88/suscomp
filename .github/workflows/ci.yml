@@ -51,7 +51,7 @@ jobs:
         path: emissions.csv
 
     # —— New steps for automated PR feedback ——
-        - name: Write comment body to file
+    - name: Write comment body to file
       run: |
         pip install pandas
         python - << 'EOF'
