@@ -4,7 +4,7 @@ import numpy as np
 # Set up LunarLander environment
 env = gym.make("LunarLander-v3", render_mode=None)
 
-NUM_EPISODES = 100
+NUM_EPISODES = 100000
 total_rewards = []
 
 for episode in range(NUM_EPISODES):
