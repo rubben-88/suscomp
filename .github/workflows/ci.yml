@@ -45,7 +45,7 @@ jobs:
     - name: Run main.py with CodeCarbon tracker
       shell: bash -l {0}
       run: |
-        python run_with_emissions.py --output-file emissions.csv
+        python run_with_emissions.py --output-file emissions.csv > codecarbon.log 2>&1
 
     - name: Upload emissions output
       uses: actions/upload-artifact@v4
@@ -67,6 +67,22 @@ jobs:
               - Energy consumed: {s.energy_consumed:.4f} kWh
               - Country: {s.country_iso_code}
             """)
+        EOF
+
+    - name: Append warnings to emissions comment
+      run: |
+        python - << 'EOF'
+        with open("codecarbon.log") as f:
+            log = f.read()
+        warnings = []
+        if "No CPU tracking mode found" in log:
+            warnings.append("- CPU energy was estimated using a constant model.")
+        if "Cloud provider 'azure' do not publish electricity carbon intensity" in log:
+            warnings.append("- Azure carbon intensity is unavailable; country average was used.")
+        with open("emissions.md", "a") as f:
+            if warnings:
+                f.write("\n**⚠️ Notes:**\n")
+                f.write("\n".join(warnings))
         EOF
 
     - name: Comment emissions on PR
