@@ -1,4 +1,4 @@
-name: CI with Conda & CodeCarbon CLI
+name: CI with Conda & CodeCarbon Shim
 
 on:
   push:
@@ -10,41 +10,44 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      # 1️⃣ Checkout your code
       - uses: actions/checkout@v4
 
-      # 2️⃣ Install Miniforge (Conda) without auto-activation
       - name: Setup Miniforge
         uses: conda-incubator/setup-miniconda@v2
         with:
           auto-activate-base: false
-          mamba-version: ""       # disable mamba entirely
+          mamba-version: ""       # disable mamba
           miniforge-version: "latest"
 
-      # 3️⃣ Create your conda env explicitly (named 'lunar-env')
       - name: Create Conda environment
         run: |
           conda env create -f environment.yml -n lunar-env
 
-      # 4️⃣ Install CodeCarbon CLI into that environment
       - name: Install CodeCarbon
         run: |
           conda run -n lunar-env pip install --upgrade codecarbon
 
-      # 5️⃣ (Optional) Check that Python is correct
       - name: Check Python version
         run: |
           conda run -n lunar-env python --version
 
-      # 6️⃣ Run your script under CodeCarbon via the CLI
       - name: Track emissions for main.py
         run: |
-          conda run -n lunar-env codecarbon run \
-            --project-name LunarLanderCLI \
-            --json-output emissions.json \
-            python main.py
+          conda run -n lunar-env python - << 'PYCODE'
+          from codecarbon import EmissionsTracker
+          import runpy
 
-      # 7️⃣ Upload the emissions.json artifact
+          tracker = EmissionsTracker(
+              project_name="LunarLanderCLI",
+              json_output_file="emissions.json"
+          )
+          tracker.start()
+
+          runpy.run_path("main.py", run_name="__main__")
+
+          tracker.stop()
+          PYCODE
+
       - name: Upload emissions.json
         uses: actions/upload-artifact@v4
         with:
