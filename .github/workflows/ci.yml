@@ -69,21 +69,13 @@ jobs:
             """)
         EOF
 
-    - name: Append warnings to emissions comment
+    - name: Append all warnings to emissions comment
       run: |
-        python - << 'EOF'
-        with open("codecarbon.log") as f:
-            log = f.read()
-        warnings = []
-        if "No CPU tracking mode found" in log:
-            warnings.append("- CPU energy was estimated using a constant model.")
-        if "Cloud provider 'azure' do not publish electricity carbon intensity" in log:
-            warnings.append("- Azure carbon intensity is unavailable; country average was used.")
-        with open("emissions.md", "a") as f:
-            if warnings:
-                f.write("\n**⚠️ Notes:**\n")
-                f.write("\n".join(warnings))
-        EOF
+        if grep -q "WARNING" codecarbon.log; then
+          echo -e "\n**⚠️ Notes:**" >> emissions.md
+          # Strip leading timestamp/brackets and prefix each warning with “- ”
+          grep -E "WARNING" codecarbon.log | sed -E 's/^\[[^]]+\] */- /' >> emissions.md
+        fi
 
     - name: Comment emissions on PR
       if: github.event_name == 'pull_request'
