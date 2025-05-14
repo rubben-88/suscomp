@@ -60,9 +60,9 @@ jobs:
         # Build markdown body
         body = (
             f"**Carbon Emissions Report**  \n"
-            f"- CO₂ emitted: {summary['emissions_in_kg']:.4f} kg  \n"
+            f"- CO₂ emitted: {summary['emissions']:.4f} kg  \n"
             f"- Energy consumed: {summary['energy_consumed']:.4f} kWh  \n"
-            f"- Timestamp: {summary['timestamp']}"
+            f"- Country: {summary['country_iso_code']}"
         )
         # Output for use in next action
         print(f"::set-output name=body::{body}")
