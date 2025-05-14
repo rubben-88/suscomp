@@ -51,25 +51,21 @@ jobs:
         path: emissions.csv
 
     # —— New steps for automated PR feedback ——
-    - name: Parse emissions and prepare comment
-      id: emissions-summary
-      shell: bash -l {0}
+        - name: Write comment body to file
       run: |
         pip install pandas
         python - << 'EOF'
         import pandas as pd
         df = pd.read_csv("emissions.csv")
         s = df.iloc[-1]
-        print(f"CO₂ emitted: {s.emissions:.4f} kg")
-        print(f"Energy consumed: {s.energy_consumed:.4f} kWh")
-        print(f"Country: {s.country_iso_code}")
-        EOF
+        with open("emissions.md", "w") as f:
+            f.write(f"""**Carbon Emissions Report**
 
-    - name: Set multiline output
-      run: |
-        echo "body<<EOF" >> $GITHUB_OUTPUT
-        echo "${{ steps.emissions-summary.outputs.stdout }}" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        - CO₂ emitted: {s.emissions:.4f} kg
+        - Energy consumed: {s.energy_consumed:.4f} kWh
+        - Country: {s.country_iso_code}
+        """)
+        EOF
 
     - name: Comment emissions on PR
       if: github.event_name == 'pull_request'
@@ -77,4 +73,5 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         issue-number: ${{ github.event.pull_request.number }}
-        body: ${{ steps.set-multiline-output.outputs.body }}
+        body-path: emissions.md
+
