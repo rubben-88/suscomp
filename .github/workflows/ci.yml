@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   track-emissions:
     runs-on: ubuntu-latest
@@ -41,31 +45,25 @@ jobs:
         python run_with_emissions.py --output-file emissions.csv
 
     - name: Upload emissions output
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: codecarbon-emissions
         path: emissions.csv
 
     # —— New steps for automated PR feedback ——
-    - name: Parse emissions and prepare comment
-      id: emissions-summary
-      shell: bash -l {0}
+    - name: Write comment body to file
       run: |
         pip install pandas
         python - << 'EOF'
-        import pandas as pd, json, sys
-        # Read the last row of the CSV
+        import pandas as pd
         df = pd.read_csv("emissions.csv")
-        summary = df.iloc[-1].to_dict()
-        # Build markdown body
-        body = (
-            f"**Carbon Emissions Report**  \n"
-            f"- CO₂ emitted: {summary['emissions_in_kg']:.4f} kg  \n"
-            f"- Energy consumed: {summary['energy_consumed']:.4f} kWh  \n"
-            f"- Timestamp: {summary['timestamp']}"
-        )
-        # Output for use in next action
-        print(f"::set-output name=body::{body}")
+        s = df.iloc[-1]
+        with open("emissions.md", "w") as f:
+            f.write(f"""**Carbon Emissions Report**
+              - CO₂ emitted: {s.emissions:.4f} kg
+              - Energy consumed: {s.energy_consumed:.4f} kWh
+              - Country: {s.country_iso_code}
+            """)
         EOF
 
     - name: Comment emissions on PR
@@ -74,4 +72,4 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         issue-number: ${{ github.event.pull_request.number }}
-        body: ${{ steps.emissions-summary.outputs.body }}
+        body-path: emissions.md
