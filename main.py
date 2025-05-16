@@ -5,7 +5,7 @@ import os
 # Set up LunarLander environment
 env = gym.make("LunarLander-v3", render_mode=None)
 
-NUM_EPISODES = int(os.getenv("NUM_EPISODES", "10"))
+NUM_EPISODES = int(os.getenv("NUM_EPISODES", "10000"))
 total_rewards = []
 
 for episode in range(NUM_EPISODES): 
