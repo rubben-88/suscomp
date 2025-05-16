@@ -244,10 +244,9 @@ jobs:
         draft: false
         signoff: true
 
-    - name: Merge the PR immediately
-      if: steps.create_pr.outputs.pull-request-number != ''
-      uses: peter-evans/merge-pull-request@v2
+    - name: Merge Pull Request
+      uses: juliangruber/merge-pull-request-action@v1
       with:
-        pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
-        merge-method: squash    # or "merge" / "rebase"
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        number: ${{ steps.create_pr.outputs.pull-request-number }}
+        method: squash
