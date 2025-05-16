@@ -163,7 +163,11 @@ jobs:
     - name: Initialize history CSV if missing
       run: |
         if [ ! -f emissions_history.csv ]; then
+          # No file at all → create it
           echo "timestamp,emissions_kg,energy_kwh" > emissions_history.csv
+        else
+          # File exists → force its header to exactly what we need
+          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' emissions_history.csv
         fi
 
     - name: Append latest run to history
