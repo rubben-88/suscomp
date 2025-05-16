@@ -164,6 +164,13 @@ jobs:
           mkdir -p "codecarbon_artifacts"
         fi
 
+    - name: Ensure README.md exists and append timestamp
+      shell: bash
+      run: |
+        if [ ! -f codecarbon_artifacts/README.md ]; then
+          echo "# Project README" > codecarbon_artifacts/README.md
+        fi
+
 #    - name: Initialize history CSV if missing
 #      run: |
 #        if [ ! -f codecarbon_artifacts/history.csv ]; then
@@ -245,7 +252,7 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add README.md codecarbon_artifacts
+        git add README.md codecarbon_artifacts/*
 
     - name: Create Pull Request for trend update
       id: create_pr
@@ -262,7 +269,7 @@ jobs:
         signoff: true
         add-paths: |
           README.md
-          codecarbon_artifacts
+          codecarbon_artifacts/README.md
 
     - name: Merge Pull Request
       uses: juliangruber/merge-pull-request-action@v1
