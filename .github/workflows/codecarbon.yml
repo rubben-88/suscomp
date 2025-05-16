@@ -1,4 +1,4 @@
-name: Run CodeCarbon Emissions Tracker
+name: CodeCarbon Emissions Tracker
 
 on:
   pull_request:
@@ -80,7 +80,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # import emmisions.csv as artifact
+    # import emissions.csv as artifact
     - name: Download the emissions artifact
       uses: actions/download-artifact@v4
       with:
@@ -141,44 +141,46 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0 
+        fetch-depth: 0 # full branch history is needed
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.x'
 
-    - name: Install plotting deps
+    - name: Install plotting dependencies
       run: pip install pandas matplotlib
 
-    # import emmisions.csv as artifact
+    # import emissions.csv as artifact
     - name: Download the emissions artifact
       uses: actions/download-artifact@v4
       with:
         name: emissions
         path: .
 
-    - name: Create directory if missing
+    # create codecarbon_artifacts directory (if needed)
+    - name: Create codecarbon_artifacts directory if missing
       run: |
         if [ ! -d "codecarbon_artifacts" ]; then
           mkdir -p "codecarbon_artifacts"
         fi
 
+    # create history.csv (if needed)
     - name: Initialize history CSV if missing
       run: |
         if [ ! -f codecarbon_artifacts/history.csv ]; then
           echo "timestamp,emissions_kg,energy_kwh" > codecarbon_artifacts/history.csv
         else
+          # enforce correct column header names
           sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' codecarbon_artifacts/history.csv
         fi
 
+    # append emissions.csv data to history.csv
     - name: Append latest run to history
       run: |
         python - << 'EOF'
         import pandas as pd
         from datetime import datetime
-
-        # load new emission
         new = pd.read_csv("emissions.csv").iloc[-1]
         row = {
           "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -188,11 +190,11 @@ jobs:
         pd.DataFrame([row]).to_csv("codecarbon_artifacts/history.csv", mode="a", header=False, index=False)
         EOF
 
+    # create emissions_trend.png & energy_trend.png
     - name: Generate trend plot
       run: |
         python - << 'EOF'
         import pandas as pd, matplotlib.pyplot as plt
-
         hist = pd.read_csv("codecarbon_artifacts/history.csv", parse_dates=["timestamp"])
         plt.plot(hist.timestamp, hist.emissions_kg)
         plt.xlabel("Datetime")
@@ -207,6 +209,7 @@ jobs:
         plt.savefig("codecarbon_artifacts/energy_trend.png")
         EOF
 
+    # create README.md (if needed) and add emissions_trend.png in tag block
     - name: Ensure README exists and embed graph
       run: |
         # If README.md does not exist, create it with the tag block
@@ -216,15 +219,13 @@ jobs:
           echo "<!-- EMISSIONS_GRAPH -->" >> README.md
           echo "<!-- END_EMISSIONS_GRAPH -->" >> README.md
         fi
-
         # If tag block is missing, append it to the end
         if ! grep -q '<!-- EMISSIONS_GRAPH -->' README.md || ! grep -q '<!-- END_EMISSIONS_GRAPH -->' README.md; then
           echo '' >> README.md
           echo '<!-- EMISSIONS_GRAPH -->' >> README.md
           echo '<!-- END_EMISSIONS_GRAPH -->' >> README.md
         fi
-
-        # Replace content between the markers
+        # Replace content in tag block
         awk '
           BEGIN {in_block=0}
           /<!-- EMISSIONS_GRAPH -->/ {print; print "![Emissions Over Time](codecarbon_artifacts/emissions_trend.png)"; in_block=1; next}
@@ -232,12 +233,14 @@ jobs:
           !in_block
         ' README.md > temp.md && mv temp.md README.md
 
+    # Commit
     - name: Commit changes
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add README.md codecarbon_artifacts/*
 
+    # Pull Request
     - name: Create Pull Request for trend update
       id: create_pr
       uses: peter-evans/create-pull-request@v5
@@ -251,10 +254,11 @@ jobs:
         labels: automated
         draft: false
         signoff: true
-        add-paths: |
+        add-paths: | # add-paths is needed as git add is not enough
           README.md
           codecarbon_artifacts/README.md
 
+    # Merge
     - name: Merge Pull Request
       uses: juliangruber/merge-pull-request-action@v1
       with:
