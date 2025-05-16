@@ -186,19 +186,23 @@ jobs:
         plt.savefig("emissions_trend.png")
         EOF
 
-    - name: Ensure README exists
-      run: |
-        # Create README.md with markers if missing
-        if [ ! -f README.md ]; then
-          cat << 'EOF' > README.md
-        fi
+  - name: Ensure README exists and embed graph
+    run: |
+      # Create README.md with markers if missing
+      if [ ! -f README.md ]; then
+        cat << 'EOF' > README.md
+        ## Carbon Emissions Over Time
 
-    - name: Embed graph into README
-      run: |
-        sed -i '/<!-- EMISSIONS_GRAPH -->/,/<!-- END_EMISSIONS_GRAPH -->/c\
-        <!-- EMISSIONS_GRAPH -->\
-        ![Emissions Over Time](emissions_trend.png)\
-        <!-- END_EMISSIONS_GRAPH -->' README.md
+        <!-- EMISSIONS_GRAPH -->
+        <!-- END_EMISSIONS_GRAPH -->
+        EOF
+      fi
+
+      # Replace content between markers
+      sed -i '/<!-- EMISSIONS_GRAPH -->/,/<!-- END_EMISSIONS_GRAPH -->/c\
+      <!-- EMISSIONS_GRAPH -->\
+      ![Emissions Over Time](emissions_trend.png)\
+      <!-- END_EMISSIONS_GRAPH -->' README.md
 
     - name: Commit & push graph update
       run: |
