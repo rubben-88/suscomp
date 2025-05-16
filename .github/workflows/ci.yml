@@ -164,6 +164,10 @@ jobs:
       run: |
         if [ ! -f emissions_history.csv ]; then
           echo "timestamp,emissions_kg,energy_kwh" > emissions_history.csv
+        else
+          # existing file → if it still has a "date" header, rename it
+          head -1 emissions_history.csv | grep -q '^date,' && \
+            sed -i '1s/^date,/timestamp,/' emissions_history.csv
         fi
 
     - name: Append latest run to history
