@@ -139,13 +139,13 @@ jobs:
       with:
         fetch-depth: 0 
 
-    name: Restore emissions history cache
-    uses: actions/cache@v3
-    with:
-      path: emissions_history.csv
-      key: ${{ runner.os }}-emissions-history
-      restore-keys: |
-        ${{ runner.os }}-emissions-history
+    - name: Restore emissions history cache
+      uses: actions/cache@v3
+      with:
+        path: emissions_history.csv
+        key: ${{ runner.os }}-emissions-history
+        restore-keys: |
+          ${{ runner.os }}-emissions-history
 
     - name: Set up Python
       uses: actions/setup-python@v4
