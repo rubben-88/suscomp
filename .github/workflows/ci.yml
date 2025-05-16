@@ -256,6 +256,8 @@ jobs:
         labels: automated
         draft: false
         signoff: true
+        add-paths: |
+          README.md
 
     - name: Merge Pull Request
       uses: juliangruber/merge-pull-request-action@v1
