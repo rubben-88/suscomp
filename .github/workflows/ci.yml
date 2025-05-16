@@ -3,8 +3,12 @@ name: Run CodeCarbon Emissions Tracker
 on:
   #pull_request:
   #  branches: [ main ]
+  #  branches-ignore:
+  #    - chore/update-emissions-trend
   push:
     branches: [ main ]
+    branches-ignore:
+      - chore/update-emissions-trend
 
 permissions:
   contents: write
@@ -13,8 +17,6 @@ permissions:
 jobs:
   # EXECUTE
   execute:
-    if: github.ref != 'refs/heads/chore/update-emissions-trend'
-
     runs-on: ubuntu-latest
 
     env:
@@ -137,6 +139,14 @@ jobs:
       with:
         fetch-depth: 0 
 
+    name: Restore emissions history cache
+    uses: actions/cache@v3
+    with:
+      path: emissions_history.csv
+      key: ${{ runner.os }}-emissions-history
+      restore-keys: |
+        ${{ runner.os }}-emissions-history
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -152,7 +162,6 @@ jobs:
         name: emissions
         path: .
 
-    # TODO
     - name: Initialize history CSV if missing
       run: |
         if [ ! -f emissions_history.csv ]; then
