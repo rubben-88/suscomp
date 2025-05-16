@@ -69,10 +69,10 @@ jobs:
 
     # import emmisions.csv as artifact
     - name: Download the emissions artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: codecarbon-emissions
-          path: .
+      uses: actions/download-artifact@v4
+      with:
+        name: codecarbon-emissions
+        path: .
 
     # read emissions.csv to create emission.md
     - name: Write comment body to file
