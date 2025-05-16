@@ -228,14 +228,14 @@ jobs:
 #          !in_block
 #        ' README.md > temp.md && mv temp.md README.md
 #
-    - name: Append timestamp to README
+    - name: Ensure README.md exists and append timestamp
       shell: bash
       run: |
-        if [ -f README.md ]; then
-          # You can choose your preferred format; this is ISO 8601 UTC
-          echo "" >> README.md
-          echo "Last updated: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> README.md
+        if [ ! -f README.md ]; then
+          echo "# Project README" > README.md
         fi
+        echo "" >> README.md
+        echo "Last updated: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> README.md
 
     - name: Commit changes
       run: |
