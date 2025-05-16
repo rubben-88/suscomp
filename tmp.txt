@@ -1,9 +1,0 @@
-conda deactivate && conda remove -n suscomp --all -y && conda create -n suscomp python=3.10 -y && conda activate suscomp
-
-pip install swig
-pip install "gymnasium[box2d]"
-conda install -c conda-forge libstdcxx-ng -y
-
-conda env export > environment.yml
-
-git add --all && git commit -m "." && git push
