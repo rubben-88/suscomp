@@ -3,12 +3,8 @@ name: Run CodeCarbon Emissions Tracker
 on:
   #pull_request:
   #  branches: [ main ]
-  #  branches-ignore:
-  #    - chore/update-emissions-trend
   push:
     branches: [ main ]
-    branches-ignore:
-      - chore/update-emissions-trend
 
 permissions:
   contents: write
@@ -17,6 +13,10 @@ permissions:
 jobs:
   # EXECUTE
   execute:
+    if: >
+      github.ref == 'refs/heads/main' &&
+      github.actor != 'github-actions[bot]'
+
     runs-on: ubuntu-latest
 
     env:
