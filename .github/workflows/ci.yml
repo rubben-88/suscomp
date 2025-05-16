@@ -153,12 +153,7 @@ jobs:
     - name: Install plotting deps
       run: pip install pandas matplotlib
 
-    # import emmisions.csv as artifact
-    - name: Download the emissions artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: emissions
-        path: .
+    
 
     - name: Initialize history CSV if missing
       run: |
