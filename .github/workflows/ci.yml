@@ -159,19 +159,17 @@ jobs:
         path: .
 
     - name: Create directory if missing
-        run: |
-          if [ ! -d "codecarbon_artifacts" ]; then
-            mkdir -p "codecarbon_artifacts"
-          fi
+      run: |
+        if [ ! -d "codecarbon_artifacts" ]; then
+          mkdir -p "codecarbon_artifacts"
+        fi
 
 #    - name: Initialize history CSV if missing
 #      run: |
-#        if [ ! -f emissions_history.csv ]; then
-#          # No file at all → create it
-#          echo "timestamp,emissions_kg,energy_kwh" > emissions_history.csv
+#        if [ ! -f codecarbon_artifacts/history.csv ]; then
+#          echo "timestamp,emissions_kg,energy_kwh" > codecarbon_artifacts/history.csv
 #        else
-#          # File exists → force its header to exactly what we need
-#          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' emissions_history.csv
+#          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' codecarbon_artifacts/history.csv
 #        fi
 
 #    - name: Append latest run to history
