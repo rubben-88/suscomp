@@ -62,7 +62,7 @@ jobs:
         df = pd.read_csv("emissions.csv")
         s = df.iloc[-1]
         with open("emissions.md", "w") as f:
-            f.write(f"""**Carbon Emissions Report**
+            f.write(f"""**Carbon Emissions Report:**
               - CO₂ emitted: {s.emissions:.4f} kg
               - Energy consumed: {s.energy_consumed:.4f} kWh
               - Country: {s.country_iso_code}
