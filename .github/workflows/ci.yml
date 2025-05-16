@@ -207,31 +207,31 @@ jobs:
         plt.savefig("codecarbon_artifacts/energy_trend.png")
         EOF
 
-#    - name: Ensure README exists and embed graph
-#      run: |
-#        # If README.md does not exist, create it with the tag block
-#        if [ ! -f README.md ]; then
-#          echo "## Carbon Emissions Over Time" > README.md
-#          echo ""                  >> README.md
-#          echo "<!-- EMISSIONS_GRAPH -->" >> README.md
-#          echo "<!-- END_EMISSIONS_GRAPH -->" >> README.md
-#        fi
-#
-#        # If tag block is missing, append it to the end
-#        if ! grep -q '<!-- EMISSIONS_GRAPH -->' README.md || ! grep -q '<!-- END_EMISSIONS_GRAPH -->' README.md; then
-#          echo '' >> README.md
-#          echo '<!-- EMISSIONS_GRAPH -->' >> README.md
-#          echo '<!-- END_EMISSIONS_GRAPH -->' >> README.md
-#        fi
-#
-#        # Replace content between the markers
-#        awk '
-#          BEGIN {in_block=0}
-#          /<!-- EMISSIONS_GRAPH -->/ {print; print "![Emissions Over Time](README_emissions_trend.png)\n![Energy usage Over Time](README_energy_trend.png)"; in_block=1; next}
-#          /<!-- END_EMISSIONS_GRAPH -->/ {in_block=0}
-#          !in_block
-#        ' README.md > temp.md && mv temp.md README.md
-#
+    - name: Ensure README exists and embed graph
+      run: |
+        # If README.md does not exist, create it with the tag block
+        if [ ! -f README.md ]; then
+          echo "## Carbon Emissions Over Time" > README.md
+          echo ""                  >> README.md
+          echo "<!-- EMISSIONS_GRAPH -->" >> README.md
+          echo "<!-- END_EMISSIONS_GRAPH -->" >> README.md
+        fi
+
+        # If tag block is missing, append it to the end
+        if ! grep -q '<!-- EMISSIONS_GRAPH -->' README.md || ! grep -q '<!-- END_EMISSIONS_GRAPH -->' README.md; then
+          echo '' >> README.md
+          echo '<!-- EMISSIONS_GRAPH -->' >> README.md
+          echo '<!-- END_EMISSIONS_GRAPH -->' >> README.md
+        fi
+
+        # Replace content between the markers
+        awk '
+          BEGIN {in_block=0}
+          /<!-- EMISSIONS_GRAPH -->/ {print; print "![Emissions Over Time](codecarbon_artifacts/README_emissions_trend.png)"; in_block=1; next}
+          /<!-- END_EMISSIONS_GRAPH -->/ {in_block=0}
+          !in_block
+        ' README.md > temp.md && mv temp.md README.md
+
     - name: Ensure README.md exists and append timestamp
       shell: bash
       run: |
