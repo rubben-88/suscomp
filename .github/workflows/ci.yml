@@ -244,11 +244,10 @@ jobs:
         draft: false
         signoff: true
 
-    - name: Enable auto-merge
+    - name: Merge the PR immediately
       if: steps.create_pr.outputs.pull-request-number != ''
-      uses: peter-evans/enable-pull-request-automerge@v2
+      uses: peter-evans/merge-pull-request@v2
       with:
         pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
-        repository: ${{ github.repository }}
-        merge-method: squash      # or "merge" / "rebase"
+        merge-method: squash    # or "merge" / "rebase"
         github-token: ${{ secrets.GITHUB_TOKEN }}
