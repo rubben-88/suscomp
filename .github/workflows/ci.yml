@@ -179,7 +179,7 @@ jobs:
         from datetime import datetime
 
         # load new emission
-        new = pd.read_csv("codecarbon_artifacts/history.csv").iloc[-1]
+        new = pd.read_csv("emissions.csv").iloc[-1]
         row = {
           "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
           "emissions_kg": new.emissions,
