@@ -186,9 +186,9 @@ jobs:
         plt.savefig("emissions_trend.png")
         EOF
 
-            - name: Embed graph into README
-              run: |
-                sed -i '/<!-- EMISSIONS_GRAPH -->/,/<!-- END_EMISSIONS_GRAPH -->/c\
+    - name: Embed graph into README
+      run: |
+        sed -i '/<!-- EMISSIONS_GRAPH -->/,/<!-- END_EMISSIONS_GRAPH -->/c\
         <!-- EMISSIONS_GRAPH -->\
         ![Emissions Over Time](emissions_trend.png)\
         <!-- END_EMISSIONS_GRAPH -->' README.md
