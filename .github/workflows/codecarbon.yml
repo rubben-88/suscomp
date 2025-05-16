@@ -256,7 +256,9 @@ jobs:
         signoff: true
         add-paths: | # add-paths is needed as git add is not enough
           README.md
-          codecarbon_artifacts/README.md
+          codecarbon_artifacts/history.csv
+          codecarbon_artifacts/emissions_trend.png
+          codecarbon_artifacts/energy_trend.png
 
     # Merge
     - name: Merge Pull Request
