@@ -228,6 +228,15 @@ jobs:
 #          !in_block
 #        ' README.md > temp.md && mv temp.md README.md
 #
+    - name: Append timestamp to README
+      shell: bash
+      run: |
+        if [ -f README.md ]; then
+          # You can choose your preferred format; this is ISO 8601 UTC
+          echo "" >> README.md
+          echo "Last updated: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> README.md
+        fi
+
     - name: Commit changes
       run: |
         git config user.name "github-actions[bot]"
