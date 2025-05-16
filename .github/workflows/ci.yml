@@ -256,10 +256,10 @@ jobs:
         labels: automated
         draft: false
         signoff: true
-#
-#    - name: Merge Pull Request
-#      uses: juliangruber/merge-pull-request-action@v1
-#      with:
-#        github-token: ${{ secrets.GITHUB_TOKEN }}
-#        number: ${{ steps.create_pr.outputs.pull-request-number }}
-#        method: squash
+
+    - name: Merge Pull Request
+      uses: juliangruber/merge-pull-request-action@v1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        number: ${{ steps.create_pr.outputs.pull-request-number }}
+        method: squash
