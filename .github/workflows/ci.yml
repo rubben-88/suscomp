@@ -188,14 +188,12 @@ jobs:
 
     - name: Ensure README exists and embed graph
       run: |
-        # Create README.md with markers if missing
+        # If README.md is missing, create it with your section markers
         if [ ! -f README.md ]; then
-          cat << 'EOF' > README.md
-## Carbon Emissions Over Time
-
-<!-- EMISSIONS_GRAPH -->
-<!-- END_EMISSIONS_GRAPH -->
-EOF
+          echo "## Carbon Emissions Over Time" > README.md
+          echo ""                  >> README.md
+          echo "<!-- EMISSIONS_GRAPH -->" >> README.md
+          echo "<!-- END_EMISSIONS_GRAPH -->" >> README.md
         fi
 
     - name: Commit & push graph update
