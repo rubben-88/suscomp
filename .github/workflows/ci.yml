@@ -53,8 +53,15 @@ jobs:
     - name: Upload emissions output
       uses: actions/upload-artifact@v4
       with:
-        name: codecarbon-emissions
+        name: emissions
         path: emissions.csv
+
+    # export codecarbon.log as artifact
+    - name: Upload emissions output
+      uses: actions/upload-artifact@v4
+      with:
+        name: codecarbon
+        path: codecarbon.log
 
   # COMMENT
   comment:
@@ -71,7 +78,14 @@ jobs:
     - name: Download the emissions artifact
       uses: actions/download-artifact@v4
       with:
-        name: codecarbon-emissions
+        name: emissions
+        path: .
+
+    # import codecarbon.log as artifact
+    - name: Download the emissions artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: codecarbon
         path: .
 
     # read emissions.csv to create emission.md
