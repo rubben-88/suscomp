@@ -1,9 +1,9 @@
 name: Run CodeCarbon Emissions Tracker
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
+    branches: [ main ]
+  push:
     branches: [ main ]
 
 permissions:
@@ -11,9 +11,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  # EXECUTE & COMMENT
-  execute-and-comment:
-    if: github.event_name == 'pull_request'
+  # EXECUTE
+  execute:
     runs-on: ubuntu-latest
 
     env:
@@ -57,7 +56,24 @@ jobs:
         name: codecarbon-emissions
         path: emissions.csv
 
-    # === automated PR feedback ===
+  # COMMENT
+  comment:
+    needs: execute
+    if: github.event_name == 'pull_request'
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # import emmisions.csv as artifact
+    - name: Download the emissions artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: codecarbon-emissions
+          path: .
+
     # read emissions.csv to create emission.md
     - name: Write comment body to file
       run: |
