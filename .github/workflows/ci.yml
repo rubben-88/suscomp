@@ -196,12 +196,13 @@ jobs:
         plt.xlabel("Datetime")
         plt.ylabel("CO₂ emissions (kg)")
         plt.tight_layout()
-        plt.savefig("tmp/emissions_trend.png")
+        plt.savefig("README_emissions_trend.png")
+        plt.clf()
         plt.plot(hist.timestamp, hist.energy_kwh)
         plt.xlabel("Datetime")
         plt.ylabel("Energy used (KwH)")
         plt.tight_layout()
-        plt.savefig("tmp/energy_trend.png")
+        plt.savefig("README_energy_trend.png")
         EOF
 
     - name: Ensure README exists and embed graph
@@ -224,7 +225,7 @@ jobs:
         # Replace content between the markers
         awk '
           BEGIN {in_block=0}
-          /<!-- EMISSIONS_GRAPH -->/ {print; print "![Emissions Over Time](tmp/emissions_trend.png)\n![Energy usage Over Time](tmp/energy_trend.png)"; in_block=1; next}
+          /<!-- EMISSIONS_GRAPH -->/ {print; print "![Emissions Over Time](README_emissions_trend.png)\n![Energy usage Over Time](README_energy_trend.png)"; in_block=1; next}
           /<!-- END_EMISSIONS_GRAPH -->/ {in_block=0}
           !in_block
         ' README.md > temp.md && mv temp.md README.md
@@ -233,7 +234,7 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add emissions_history.csv emissions_trend.png energy_trend.png README.md
+        git add emissions_history.csv README_emissions_trend.png README_energy_trend.png README.md
 
     - name: Create Pull Request for trend update
       id: create_pr
