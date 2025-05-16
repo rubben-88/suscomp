@@ -13,7 +13,7 @@ permissions:
 jobs:
   # EXECUTE
   execute:
-    if: github.head_ref != 'refs/heads/chore/update-emissions-trend'
+    if: github.ref != 'refs/heads/chore/update-emissions-trend'
 
     runs-on: ubuntu-latest
 
