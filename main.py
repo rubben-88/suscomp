@@ -19,7 +19,7 @@ for episode in range(NUM_EPISODES):
         done = terminated or truncated
         total_reward += reward
 
-    total_rewards.append(total_reward)
+    total_rewards.append(total_reward) 
 
 # Save summary
 print(f"Ran {NUM_EPISODES} episodes")
