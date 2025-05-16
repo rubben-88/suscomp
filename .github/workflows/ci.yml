@@ -179,13 +179,13 @@ jobs:
 #        from datetime import datetime
 #
 #        # load new emission
-#        new = pd.read_csv("emissions.csv").iloc[-1]
+#        new = pd.read_csv("codecarbon_artifacts/history.csv").iloc[-1]
 #        row = {
 #          "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
 #          "emissions_kg": new.emissions,
 #          "energy_kwh": new.energy_consumed
 #        }
-#        pd.DataFrame([row]).to_csv("emissions_history.csv", mode="a", header=False, index=False)
+#        pd.DataFrame([row]).to_csv("codecarbon_artifacts/history.csv", mode="a", header=False, index=False)
 #        EOF
 #
 #    - name: Generate trend plot
@@ -245,7 +245,7 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add README.md
+        git add README.md codecarbon_artifacts/*
 
     - name: Create Pull Request for trend update
       id: create_pr
@@ -262,6 +262,7 @@ jobs:
         signoff: true
         add-paths: |
           README.md
+          codecarbon_artifacts
 
     - name: Merge Pull Request
       uses: juliangruber/merge-pull-request-action@v1
