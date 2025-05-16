@@ -11,7 +11,9 @@ permissions:
   pull-requests: write
 
 jobs:
-  # EXECUTE
+  #=====================================================================================================
+  # EXECUTE ============================================================================================
+  #=====================================================================================================
   execute:
     if: github.actor != 'github-actions[bot]'
 
@@ -19,6 +21,7 @@ jobs:
 
     env:
       NUM_EPISODES: 1000
+      ARTIFACT_DIR: emissions_data
 
     steps:
     - name: Checkout code
@@ -36,36 +39,41 @@ jobs:
       run: |
         pip install codecarbon
 
+    - name: Prepare output directory
+      run: |
+        mkdir -p "$ARTIFACT_DIR"
+
     - name: Create wrapper to run main.py with CodeCarbon
       shell: bash -l {0}
       run: |
-        echo "from codecarbon import EmissionsTracker" > run_with_emissions.py
-        echo "tracker = EmissionsTracker()" >> run_with_emissions.py
-        echo "tracker.start()" >> run_with_emissions.py
-        echo "exec(open('main.py').read())" >> run_with_emissions.py
-        echo "tracker.stop()" >> run_with_emissions.py
+        cat << 'EOF' > run_with_emissions.py
+        from codecarbon import EmissionsTracker
+        tracker = EmissionsTracker(output_file=f"{os.getenv('ARTIFACT_DIR')}/emissions.csv")
+        tracker.start()
+        exec(open('main.py').read())
+        tracker.stop()
+        EOF
 
-    # create emissions.csv && codecarbon.log
     - name: Run main.py with CodeCarbon tracker
       shell: bash -l {0}
       run: |
-        python run_with_emissions.py --output-file emissions.csv > codecarbon.log 2>&1
+        python run_with_emissions.py > "$ARTIFACT_DIR/codecarbon.log" 2>&1
 
-    # export emmisions.csv as artifact
-    - name: Upload emissions output
+    - name: Upload emissions.csv artifact
       uses: actions/upload-artifact@v4
       with:
-        name: emissions
-        path: emissions.csv
+        name: emissions-csv
+        path: "$ARTIFACT_DIR/emissions.csv"
 
-    # export codecarbon.log as artifact
-    - name: Upload emissions output
+    - name: Upload codecarbon.log artifact
       uses: actions/upload-artifact@v4
       with:
-        name: codecarbon
-        path: codecarbon.log
+        name: codecarbon-log
+        path: "$ARTIFACT_DIR/codecarbon.log"
 
-  # COMMENT
+  #=====================================================================================================
+  # COMMENT ============================================================================================
+  #=====================================================================================================
   comment:
     needs: execute
     if: github.event_name == 'pull_request'
@@ -76,74 +84,60 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # import emmisions.csv as artifact
-    - name: Download the emissions artifact
+    - name: Download emissions artifact
       uses: actions/download-artifact@v4
       with:
-        name: emissions
-        path: .
+        name: emissions-csv
+        path: emissions_data
 
-    # import codecarbon.log as artifact
-    - name: Download the emissions artifact
+    - name: Download codecarbon log
       uses: actions/download-artifact@v4
       with:
-        name: codecarbon
-        path: .
+        name: codecarbon-log
+        path: emissions_data
 
-    # read emissions.csv to create emission.md
     - name: Write comment body to file
       run: |
         pip install pandas
         python - << 'EOF'
         import pandas as pd
-        df = pd.read_csv("emissions.csv")
+        df = pd.read_csv("emissions_data/emissions.csv")
         s = df.iloc[-1]
         with open("emissions.md", "w") as f:
-            f.write(f"""**Carbon Emissions Report:**
-              - CO₂ emitted: {s.emissions:.4f} kg
-              - Energy consumed: {s.energy_consumed:.4f} kWh
-              - Country: {s.country_iso_code}
-            """)
+            f.write(f"**Carbon Emissions Report:**\n- CO₂ emitted: {s.emissions:.4f} kg\n- Energy consumed: {s.energy_consumed:.4f} kWh\n- Country: {s.country_iso_code}\n")
         EOF
 
-    # read codecarbon.log to create add to emissions.md
-    - name: Append all warnings to emissions comment
+    - name: Append warnings to comment
       run: |
-        if grep -q "WARNING" codecarbon.log; then
+        if grep -q "WARNING" emissions_data/codecarbon.log; then
           echo -e "\n**⚠️ Notes:**" >> emissions.md
-          # Strip leading timestamp/brackets and prefix each warning with “- ”
-          grep -E "WARNING" codecarbon.log | sed -E 's/^\[[^]]+\] */- /' >> emissions.md
+          grep -E "WARNING" emissions_data/codecarbon.log | sed -E 's/^\[[^]]+\] */- /' >> emissions.md
         fi
 
-    # push the emissions.md to the PR as comment
     - name: Comment emissions on PR
-      if: github.event_name == 'pull_request'
       uses: peter-evans/create-or-update-comment@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         issue-number: ${{ github.event.pull_request.number }}
         body-path: emissions.md
 
-  # GRAPH
+  #=====================================================================================================
+  # GRAPH ==============================================================================================
+  #=====================================================================================================
   graph:
     needs: execute
     if: github.event_name == 'push'
 
     runs-on: ubuntu-latest
 
+    env:
+      ARTIFACT_DIR: emissions_data
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0 
-
-    - name: Restore emissions history cache
-      uses: actions/cache@v3
-      with:
-        path: emissions_history.csv
-        key: ${{ runner.os }}-emissions-history
-        restore-keys: |
-          ${{ runner.os }}-emissions-history
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -153,16 +147,19 @@ jobs:
     - name: Install plotting deps
       run: pip install pandas matplotlib
 
-    
+    - name: Download emissions artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: emissions-csv
+        path: "$ARTIFACT_DIR"
 
-    - name: Initialize history CSV if missing
+    - name: Initialize history CSV
       run: |
-        if [ ! -f emissions_history.csv ]; then
-          # No file at all → create it
-          echo "timestamp,emissions_kg,energy_kwh" > emissions_history.csv
+        mkdir -p "$ARTIFACT_DIR"
+        if [ ! -f "$ARTIFACT_DIR/emissions_history.csv" ]; then
+          echo "timestamp,emissions_kg,energy_kwh" > "$ARTIFACT_DIR/emissions_history.csv"
         else
-          # File exists → force its header to exactly what we need
-          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' emissions_history.csv
+          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' "$ARTIFACT_DIR/emissions_history.csv"
         fi
 
     - name: Append latest run to history
@@ -170,57 +167,49 @@ jobs:
         python - << 'EOF'
         import pandas as pd
         from datetime import datetime
-
-        # load new emission
-        new = pd.read_csv("emissions.csv").iloc[-1]
+        new = pd.read_csv("emissions_data/emissions.csv").iloc[-1]
         row = {
           "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
           "emissions_kg": new.emissions,
           "energy_kwh": new.energy_consumed
         }
-        pd.DataFrame([row]).to_csv("emissions_history.csv", mode="a", header=False, index=False)
+        pd.DataFrame([row]).to_csv("emissions_data/emissions_history.csv", mode="a", header=False, index=False)
         EOF
 
-    - name: Generate trend plot
+    - name: Generate trend plots
       run: |
         python - << 'EOF'
         import pandas as pd, matplotlib.pyplot as plt
-
-        hist = pd.read_csv("emissions_history.csv", parse_dates=["timestamp"])
+        hist = pd.read_csv("emissions_data/emissions_history.csv", parse_dates=["timestamp"])
         plt.plot(hist.timestamp, hist.emissions_kg)
         plt.xlabel("Datetime")
         plt.ylabel("CO₂ emissions (kg)")
         plt.tight_layout()
-        plt.savefig("README_emissions_trend.png")
+        plt.savefig("emissions_data/README_emissions_trend.png")
         plt.clf()
         plt.plot(hist.timestamp, hist.energy_kwh)
         plt.xlabel("Datetime")
-        plt.ylabel("Energy used (KwH)")
+        plt.ylabel("Energy used (kWh)")
         plt.tight_layout()
-        plt.savefig("README_energy_trend.png")
+        plt.savefig("emissions_data/README_energy_trend.png")
         EOF
 
-    - name: Ensure README exists and embed graph
+    - name: Ensure README embeds graphs
       run: |
-        # If README.md does not exist, create it with the tag block
         if [ ! -f README.md ]; then
           echo "## Carbon Emissions Over Time" > README.md
-          echo ""                  >> README.md
+          echo ""                   >> README.md
           echo "<!-- EMISSIONS_GRAPH -->" >> README.md
           echo "<!-- END_EMISSIONS_GRAPH -->" >> README.md
         fi
-
-        # If tag block is missing, append it to the end
         if ! grep -q '<!-- EMISSIONS_GRAPH -->' README.md || ! grep -q '<!-- END_EMISSIONS_GRAPH -->' README.md; then
           echo '' >> README.md
           echo '<!-- EMISSIONS_GRAPH -->' >> README.md
           echo '<!-- END_EMISSIONS_GRAPH -->' >> README.md
         fi
-
-        # Replace content between the markers
         awk '
           BEGIN {in_block=0}
-          /<!-- EMISSIONS_GRAPH -->/ {print; print "![Emissions Over Time](README_emissions_trend.png)\n![Energy usage Over Time](README_energy_trend.png)"; in_block=1; next}
+          /<!-- EMISSIONS_GRAPH -->/ {print; print "![Emissions Over Time](emissions_data/README_emissions_trend.png)\n![Energy usage Over Time](emissions_data/README_energy_trend.png)"; in_block=1; next}
           /<!-- END_EMISSIONS_GRAPH -->/ {in_block=0}
           !in_block
         ' README.md > temp.md && mv temp.md README.md
@@ -229,7 +218,7 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add README_emissions_trend.png README_energy_trend.png README.md
+        git add emissions_data/emissions_history.csv emissions_data/README_emissions_trend.png emissions_data/README_energy_trend.png README.md
 
     - name: Create Pull Request for trend update
       id: create_pr
@@ -250,4 +239,3 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         number: ${{ steps.create_pr.outputs.pull-request-number }}
-        method: squash
