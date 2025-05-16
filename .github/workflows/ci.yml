@@ -188,25 +188,25 @@ jobs:
         pd.DataFrame([row]).to_csv("codecarbon_artifacts/history.csv", mode="a", header=False, index=False)
         EOF
 
-#    - name: Generate trend plot
-#      run: |
-#        python - << 'EOF'
-#        import pandas as pd, matplotlib.pyplot as plt
-#
-#        hist = pd.read_csv("emissions_history.csv", parse_dates=["timestamp"])
-#        plt.plot(hist.timestamp, hist.emissions_kg)
-#        plt.xlabel("Datetime")
-#        plt.ylabel("CO₂ emissions (kg)")
-#        plt.tight_layout()
-#        plt.savefig("README_emissions_trend.png")
-#        plt.clf()
-#        plt.plot(hist.timestamp, hist.energy_kwh)
-#        plt.xlabel("Datetime")
-#        plt.ylabel("Energy used (KwH)")
-#        plt.tight_layout()
-#        plt.savefig("README_energy_trend.png")
-#        EOF
-#
+    - name: Generate trend plot
+      run: |
+        python - << 'EOF'
+        import pandas as pd, matplotlib.pyplot as plt
+
+        hist = pd.read_csv("codecarbon_artifacts/history.csv", parse_dates=["timestamp"])
+        plt.plot(hist.timestamp, hist.emissions_kg)
+        plt.xlabel("Datetime")
+        plt.ylabel("CO₂ emissions (kg)")
+        plt.tight_layout()
+        plt.savefig("codecarbon_artifacts/emissions_trend.png")
+        plt.clf()
+        plt.plot(hist.timestamp, hist.energy_kwh)
+        plt.xlabel("Datetime")
+        plt.ylabel("Energy used (KwH)")
+        plt.tight_layout()
+        plt.savefig("codecarbon_artifacts/energy_trend.png")
+        EOF
+
 #    - name: Ensure README exists and embed graph
 #      run: |
 #        # If README.md does not exist, create it with the tag block
