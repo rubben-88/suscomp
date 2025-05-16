@@ -124,7 +124,7 @@ jobs:
         issue-number: ${{ github.event.pull_request.number }}
         body-path: emissions.md
 
-  # UPDATE GRAPH
+  # GRAPH
   graph:
     needs: execute
     if: github.event_name == 'push'
@@ -196,12 +196,12 @@ jobs:
         plt.xlabel("Datetime")
         plt.ylabel("CO₂ emissions (kg)")
         plt.tight_layout()
-        plt.savefig("emissions_trend.png")
+        plt.savefig("tmp/emissions_trend.png")
         plt.plot(hist.timestamp, hist.energy_kwh)
         plt.xlabel("Datetime")
         plt.ylabel("Energy used (KwH)")
         plt.tight_layout()
-        plt.savefig("energy_trend.png")
+        plt.savefig("tmp/energy_trend.png")
         EOF
 
     - name: Ensure README exists and embed graph
@@ -224,7 +224,7 @@ jobs:
         # Replace content between the markers
         awk '
           BEGIN {in_block=0}
-          /<!-- EMISSIONS_GRAPH -->/ {print; print "![Emissions Over Time](emissions_trend.png)\n![Energy usage Over Time](energy_trend.png)"; in_block=1; next}
+          /<!-- EMISSIONS_GRAPH -->/ {print; print "![Emissions Over Time](tmp/emissions_trend.png)\n![Energy usage Over Time](tmp/energy_trend.png)"; in_block=1; next}
           /<!-- END_EMISSIONS_GRAPH -->/ {in_block=0}
           !in_block
         ' README.md > temp.md && mv temp.md README.md
