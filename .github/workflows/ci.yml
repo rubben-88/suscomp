@@ -1,105 +1,108 @@
-name: Sustainable CI
+name: Run CodeCarbon Emissions Tracker
 
-# 1️⃣ Track on every PR, 2️⃣ Update trend on merges to main
 on:
-  pull_request:
-    branches: [ main ]
   push:
+    branches: [ main ]
+  pull_request:
     branches: [ main ]
 
 permissions:
-  contents: write      # for both commenting on PRs & committing back to main
-  pull-requests: write # for PR comments
-
-env:
-  HISTORY_CSV: emissions_history.csv
-  TREND_PNG:  emissions_trend.png
+  contents: write
+  pull-requests: write
 
 jobs:
-  track-emissions:
+  # EXECUTE & COMMENT
+  execute-and-comment:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
+    env:
+      NUM_EPISODES: 1000
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: myenv
-          environment-file: environment.yml
-          auto-activate-base: false
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: myenv
+        environment-file: environment.yml
+        auto-activate-base: false
 
-      - name: Install CodeCarbon
-        shell: bash -l {0}
-        run: pip install codecarbon
+    - name: Install CodeCarbon
+      shell: bash -l {0}
+      run: |
+        pip install codecarbon
 
-      - name: Create wrapper to run main.py with CodeCarbon
-        shell: bash -l {0}
-        run: |
-          cat > run_with_emissions.py <<'EOF'
-          from codecarbon import EmissionsTracker
-          tracker = EmissionsTracker()
-          tracker.start()
-          exec(open('main.py').read())
-          tracker.stop()
-          EOF
+    - name: Create wrapper to run main.py with CodeCarbon
+      shell: bash -l {0}
+      run: |
+        echo "from codecarbon import EmissionsTracker" > run_with_emissions.py
+        echo "tracker = EmissionsTracker()" >> run_with_emissions.py
+        echo "tracker.start()" >> run_with_emissions.py
+        echo "exec(open('main.py').read())" >> run_with_emissions.py
+        echo "tracker.stop()" >> run_with_emissions.py
 
-      - name: Run tracker
-        shell: bash -l {0}
-        run: python run_with_emissions.py --output-file emissions.csv > codecarbon.log 2>&1
+    # create emissions.csv && codecarbon.log
+    - name: Run main.py with CodeCarbon tracker
+      shell: bash -l {0}
+      run: |
+        python run_with_emissions.py --output-file emissions.csv > codecarbon.log 2>&1
 
-      - name: Upload emissions artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: codecarbon-emissions
-          path: emissions.csv
+    # export emmisions.csv as artifact
+    - name: Upload emissions output
+      uses: actions/upload-artifact@v4
+      with:
+        name: codecarbon-emissions
+        path: emissions.csv
 
-      - name: Build PR comment
-        run: |
-          pip install pandas
-          python - << 'EOF'
-          import pandas as pd
-          df = pd.read_csv("emissions.csv")
-          s = df.iloc[-1]
-          md = f"""**Carbon Emissions Report**  
-          • CO₂ emitted: {s.emissions_in_kg:.4f} kg  
-          • Energy consumed: {s.energy_consumed:.4f} kWh  
-          • Country: {s.country_iso_code}  
-          """
-          # Add any warnings
-          import subprocess, sys
-          warnings = subprocess.run(
-            ["grep", "-E", "WARNING", "codecarbon.log"],
-            capture_output=True, text=True
-          ).stdout
-          if warnings:
-            md += "\n**⚠️ Notes:**\n" + "\n".join(
-              f"- {line.split(']',1)[-1].strip()}"
-              for line in warnings.splitlines()
-            )
-          with open("emissions.md","w") as f:
-            f.write(md)
-          EOF
+    # === automated PR feedback ===
+    # read emissions.csv to create emission.md
+    - name: Write comment body to file
+      run: |
+        pip install pandas
+        python - << 'EOF'
+        import pandas as pd
+        df = pd.read_csv("emissions.csv")
+        s = df.iloc[-1]
+        with open("emissions.md", "w") as f:
+            f.write(f"""**Carbon Emissions Report:**
+              - CO₂ emitted: {s.emissions:.4f} kg
+              - Energy consumed: {s.energy_consumed:.4f} kWh
+              - Country: {s.country_iso_code}
+            """)
+        EOF
 
-      - name: Comment on PR
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: emissions.md
+    # read codecarbon.log to create add to emissions.md
+    - name: Append all warnings to emissions comment
+      run: |
+        if grep -q "WARNING" codecarbon.log; then
+          echo -e "\n**⚠️ Notes:**" >> emissions.md
+          # Strip leading timestamp/brackets and prefix each warning with “- ”
+          grep -E "WARNING" codecarbon.log | sed -E 's/^\[[^]]+\] */- /' >> emissions.md
+        fi
 
-  update-trend:
+    # push the emissions.md to the PR as comment
+    - name: Comment emissions on PR
+      if: github.event_name == 'pull_request'
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body-path: emissions.md
+
+  # UPDATE GRAPH
+  update-trend-graph:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    needs: track-emissions   # ensures the PR job finishes if this push stems from a merged PR
+    needs: execute-and-comment
 
     steps:
       - name: Checkout main
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # whole history
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -114,62 +117,3 @@ jobs:
         with:
           name: codecarbon-emissions
           path: .
-        continue-on-error: true
-
-      - name: Ensure emissions.csv exists
-        run: |
-          if [ ! -f emissions.csv ]; then
-            echo "⚠️ No artifact found – running tracker on main"
-            pip install codecarbon
-            python run_with_emissions.py --output-file emissions.csv
-          fi
-
-      - name: Append to history CSV
-        run: |
-          # Initialize if absent
-          if [ ! -f $HISTORY_CSV ]; then
-            echo "date,emissions_kg,energy_kwh" > $HISTORY_CSV
-          fi
-
-          python - << 'EOF'
-          import pandas as pd
-          from datetime import datetime
-          # read
-          latest = pd.read_csv("emissions.csv").iloc[-1]
-          row = {
-            "date": datetime.utcnow().strftime("%Y-%m-%d"),
-            "emissions_kg": latest.emissions_in_kg,
-            "energy_kwh": latest.energy_consumed
-          }
-          df_row = pd.DataFrame([row])
-          df_row.to_csv("${HISTORY_CSV}", mode="a", header=False, index=False)
-          EOF
-
-      - name: Generate trend plot
-        run: |
-          python - << 'EOF'
-          import pandas as pd, matplotlib.pyplot as plt
-          hist = pd.read_csv("${HISTORY_CSV}", parse_dates=["date"])
-          plt.plot(hist.date, hist.emissions_kg)
-          plt.xlabel("Date")
-          plt.ylabel("CO₂ emissions (kg)")
-          plt.tight_layout()
-          plt.savefig("${TREND_PNG}")
-          EOF
-
-      - name: Embed into README
-        run: |
-          # Make sure README has the markers:
-          # <!-- EMISSIONS_GRAPH --> ... <!-- END_EMISSIONS_GRAPH -->
-          sed -i '/<!-- EMISSIONS_GRAPH -->/,/<!-- END_EMISSIONS_GRAPH -->/c\
-          <!-- EMISSIONS_GRAPH -->\
-          ![Emissions Over Time]('"${TREND_PNG}"')\
-          <!-- END_EMISSIONS_GRAPH -->' README.md
-
-      - name: Commit & push trend update
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add $HISTORY_CSV $TREND_PNG README.md
-          git commit -m "chore: update emissions trend graph [ci skip]" || echo "No changes"
-          git push
