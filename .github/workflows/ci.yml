@@ -168,19 +168,9 @@ jobs:
 
     - name: Append latest run to history
       run: |
-        python - << 'EOF'
-        import pandas as pd
-        from datetime import datetime
-
-        # load new emission
-        new = pd.read_csv("emissions.csv").iloc[-1]
-        row = {
-          "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-          "emissions_kg": new.emissions,
-          "energy_kwh": new.energy_consumed
-        }
-        pd.DataFrame([row]).to_csv("emissions_history.csv", mode="a", header=False, index=False)
-        EOF
+        ts=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+        read -r _ _ em en < <(tail -n1 emissions.csv)
+        echo "${ts},${em},${en}" >> emissions_history.csv
 
     - name: Generate trend plot
       run: |
