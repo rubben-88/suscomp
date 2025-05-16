@@ -159,18 +159,18 @@ jobs:
         path: .
 
     - name: Create directory if missing
-        run: |
-          if [ ! -d "codecarbon_artifacts" ]; then
-            mkdir -p "codecarbon_artifacts"
-          fi
-
-    - name: Initialize history CSV if missing
       run: |
-        if [ ! -f codecarbon_artifacts/history.csv ]; then
-          echo "timestamp,emissions_kg,energy_kwh" > codecarbon_artifacts/history.csv
-        else
-          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' codecarbon_artifacts/history.csv
+        if [ ! -d "codecarbon_artifacts" ]; then
+          mkdir -p "codecarbon_artifacts"
         fi
+
+#    - name: Initialize history CSV if missing
+#      run: |
+#        if [ ! -f codecarbon_artifacts/history.csv ]; then
+#          echo "timestamp,emissions_kg,energy_kwh" > codecarbon_artifacts/history.csv
+#        else
+#          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' codecarbon_artifacts/history.csv
+#        fi
 
 #    - name: Append latest run to history
 #      run: |
