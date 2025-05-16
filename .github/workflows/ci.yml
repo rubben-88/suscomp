@@ -167,7 +167,7 @@ jobs:
         new = pd.read_csv("emissions.csv").iloc[-1]
         row = {
           "date": datetime.utcnow().strftime("%Y-%m-%d"),
-          "emissions_kg": new.emissions_in_kg,
+          "emissions_kg": new.emissions,
           "energy_kwh": new.energy_consumed
         }
         pd.DataFrame([row]).to_csv("emissions_history.csv", mode="a", header=False, index=False)
