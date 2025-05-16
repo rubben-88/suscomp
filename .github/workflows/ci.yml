@@ -158,6 +158,12 @@ jobs:
         name: emissions
         path: .
 
+    - name: Create directory if missing
+        run: |
+          if [ ! -d "codecarbon_artifacts" ]; then
+            mkdir -p "codecarbon_artifacts"
+          fi
+
 #    - name: Initialize history CSV if missing
 #      run: |
 #        if [ ! -f emissions_history.csv ]; then
@@ -167,7 +173,7 @@ jobs:
 #          # File exists → force its header to exactly what we need
 #          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' emissions_history.csv
 #        fi
-#
+
 #    - name: Append latest run to history
 #      run: |
 #        python - << 'EOF'
