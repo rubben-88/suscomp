@@ -23,4 +23,4 @@ for episode in range(NUM_EPISODES):
 
 # Save summary
 print(f"Ran {NUM_EPISODES} episodes")
-print(f"Average reward: {np.mean(total_rewards):.2f}")
+print(f"Average reward: {np.mean(total_rewards):.2f}") 
