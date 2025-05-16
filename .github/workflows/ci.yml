@@ -164,37 +164,30 @@ jobs:
           mkdir -p "codecarbon_artifacts"
         fi
 
-    - name: Ensure README.md exists and append timestamp
-      shell: bash
+    - name: Initialize history CSV if missing
       run: |
-        if [ ! -f codecarbon_artifacts/README.md ]; then
-          echo "# Project README" > codecarbon_artifacts/README.md
+        if [ ! -f codecarbon_artifacts/history.csv ]; then
+          echo "timestamp,emissions_kg,energy_kwh" > codecarbon_artifacts/history.csv
+        else
+          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' codecarbon_artifacts/history.csv
         fi
 
-#    - name: Initialize history CSV if missing
-#      run: |
-#        if [ ! -f codecarbon_artifacts/history.csv ]; then
-#          echo "timestamp,emissions_kg,energy_kwh" > codecarbon_artifacts/history.csv
-#        else
-#          sed -i '1s/.*/timestamp,emissions_kg,energy_kwh/' codecarbon_artifacts/history.csv
-#        fi
+    - name: Append latest run to history
+      run: |
+        python - << 'EOF'
+        import pandas as pd
+        from datetime import datetime
 
-#    - name: Append latest run to history
-#      run: |
-#        python - << 'EOF'
-#        import pandas as pd
-#        from datetime import datetime
-#
-#        # load new emission
-#        new = pd.read_csv("codecarbon_artifacts/history.csv").iloc[-1]
-#        row = {
-#          "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-#          "emissions_kg": new.emissions,
-#          "energy_kwh": new.energy_consumed
-#        }
-#        pd.DataFrame([row]).to_csv("codecarbon_artifacts/history.csv", mode="a", header=False, index=False)
-#        EOF
-#
+        # load new emission
+        new = pd.read_csv("codecarbon_artifacts/history.csv").iloc[-1]
+        row = {
+          "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+          "emissions_kg": new.emissions,
+          "energy_kwh": new.energy_consumed
+        }
+        pd.DataFrame([row]).to_csv("codecarbon_artifacts/history.csv", mode="a", header=False, index=False)
+        EOF
+
 #    - name: Generate trend plot
 #      run: |
 #        python - << 'EOF'
